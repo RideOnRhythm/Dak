@@ -66,7 +66,7 @@ class C4Game:
         elif self.turn == 1:
             self.turn = 0
 
-    async def ctx_send_board(self, ctx):
+    async def ctx_send_board(self, ctx, color_guide=False):
         embed = discord.Embed(
             title=f"{self.players[0].display_name} and {self.players[1].display_name}'s game:",
             color=self.embed_color
@@ -86,11 +86,13 @@ class C4Game:
             # Newline for next row in the board
             board += "\n"
 
-        embed.description = f"""🔴 ― {self.players[0].mention}
+        embed.description = ""
+        if color_guide:
+            embed.description = f"""🔴 ― {self.players[0].mention}
 🟡 ― {self.players[1].mention}
-{self.players[self.turn].mention}'s turn
-Game:
-{board}"""
+"""
+        embed.description += f"{self.players[self.turn].mention}'s turn"
+        embed.add_field(name="Game", value=board)
 
         await ctx.send(self.players[self.turn].mention, embed=embed)
 
@@ -115,25 +117,16 @@ Game:
             board += "\n"
 
         if result == C4GameResults.WIN:
-            embed.description = f"""🔴 ― {self.players[0].mention}
-🟡 ― {self.players[1].mention}
-{self.players[self.turn].mention} has won!
-Game:
-{board}"""
+            embed.description = f"{self.players[self.turn].mention} has won!"
+            embed.add_field(name="Game", value=board)
         elif result == C4GameResults.DRAW:
-            embed.description = f"""🔴 ― {self.players[0].mention}
-🟡 ― {self.players[1].mention}
-The game has ended in a draw.
-Game:
-{board}"""
+            embed.description = f"The game has ended in a draw."
+            embed.add_field(name="Game", value=board)
         elif result == C4GameResults.FORFEIT:
             # 1 - self.turn gives the opposite of the turn
-            embed.description = f"""🔴 ― {self.players[0].mention}
-🟡 ― {self.players[1].mention}
-{self.players[1 - self.turn].mention} has won because of {self.players[self.turn].mention}'s forfeit.
-Game:
-{board}"""
-
+            embed.description = (f"{self.players[1 - self.turn].mention} has won because of "
+                                 f"{self.players[self.turn].mention}'s forfeit.")
+            embed.add_field(name="Game", value=board)
         await ctx.send(self.players[self.turn].mention, embed=embed)
 
 
@@ -144,27 +137,33 @@ class ConnectFour(commands.Cog):
     @commands.command(aliases=["c4", "connect_4", "connectfour", "connect4"])
     async def connect_four(self, ctx, member: discord.Member):
         game = C4Game(ctx.author, member)
+        color_guide = True
 
         while True:
             player = game.players[game.turn]
 
             # Send the board and then ask for player input
-            await game.ctx_send_board(ctx)
+            # Only include the color guide for the first turn
+            await game.ctx_send_board(ctx, color_guide=color_guide)
+            color_guide = False
 
-            def check(m):
-                # Message author is the player with the turn, and the channel is right
-                return m.author == player and m.channel == ctx.channel
+            while True:
+                def check(m):
+                    # Message author is the player with the turn, and the channel is right
+                    return m.author == player and m.channel == ctx.channel
 
-            player_input = await self.bot.wait_for('message', check=check)
-            player_input = player_input.content
-            if player_input.isnumeric():
-                # Input is a number, proceed if number is between 1 and 7
-                if 1 <= int(player_input) <= 7:
-                    await game.place(int(player_input))
-            elif player_input.lower() in ("forfeit", "ff", "resign", "you win", "i quit"):
-                await game.game_over(ctx, C4GameResults.FORFEIT)
-            else:
-                continue
+                player_input = await self.bot.wait_for('message', check=check)
+                player_input = player_input.content
+                if player_input.isnumeric():
+                    # Input is a number, proceed if number is between 1 and 7
+                    if 1 <= int(player_input) <= 7:
+                        await game.place(int(player_input))
+                        break
+                elif player_input.lower() in ("forfeit", "ff", "resign", "you win", "i quit"):
+                    await game.game_over(ctx, C4GameResults.FORFEIT)
+                    return
+                else:
+                    continue
 
             result = await game.check_result()
             if result in (C4GameResults.WIN, C4GameResults.DRAW):
