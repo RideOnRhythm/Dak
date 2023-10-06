@@ -1,6 +1,9 @@
 import discord
 from discord.ext import commands
+import numpy as np
+from scipy.signal import convolve2d
 from assets.enums import C4PlaceResults
+from assets.enums import C4GameResults
 
 
 # Each game is represented by a class instance to allow multiple games at once.
@@ -12,6 +15,7 @@ class C4Game:
         self.empty = ":blue_square:"
         self.p1piece = ":red_circle:"
         self.p2piece = ":yellow_circle:"
+        self.embed_color = discord.Color.random()
 
         self.turn = 0
 
@@ -38,16 +42,33 @@ class C4Game:
             # No available space left for the piece
             return C4PlaceResults.NO_SPACE
 
+    async def check_result(self):
+        # idk how this works but it's super cool!
+        horizontal_kernel = np.array([[1, 1, 1, 1]])
+        vertical_kernel = np.transpose(horizontal_kernel)
+        diag1_kernel = np.eye(4, dtype=np.uint8)
+        diag2_kernel = np.fliplr(diag1_kernel)
+        detection_kernels = [horizontal_kernel, vertical_kernel, diag1_kernel, diag2_kernel]
+
+        for kernel in detection_kernels:
+            if (convolve2d(self.game_board == self.turn + 1, kernel, mode="valid") == 4).any():
+                return C4GameResults.WIN
+
+        # TODO: check for draw
+        return C4GameResults.DRAW
+
+    async def swap_players(self):
         # Next player's turn
         if self.turn == 0:
             self.turn = 1
         elif self.turn == 1:
             self.turn = 0
 
-        return C4PlaceResults.SUCCESSFUL
-
     async def ctx_send_board(self, ctx):
-        embed = discord.Embed(title=f"{self.players[0].display_name} and {self.players[1].display_name}'s game:")
+        embed = discord.Embed(
+            title=f"{self.players[0].display_name} and {self.players[1].display_name}'s game:",
+            color=self.embed_color
+        )
 
         board = ""
         # Representing the game board in an embed
@@ -63,10 +84,55 @@ class C4Game:
             # Newline for next row in the board
             board += "\n"
 
-        embed.description = f"""🔴 ― {self.players[0].display_name}
-🟡 ― {self.players[1].display_name}
+        embed.description = f"""🔴 ― {self.players[0].mention}
+🟡 ― {self.players[1].mention}
+{self.players[self.turn].mention}'s turn
 Game:
 {board}"""
+
+        await ctx.send(self.players[self.turn].mention, embed=embed)
+
+    async def game_over(self, ctx, result):
+        embed = discord.Embed(
+            title=f"{self.players[0].display_name} and {self.players[1].display_name}'s game:",
+            color=self.embed_color
+        )
+
+        board = ""
+        # Representing the game board in an embed
+        # The game board is reversed to display it top to bottom instead of bottom to top
+        for row in reversed(self.game_board):
+            for col in row:
+                if col == 0:
+                    board += self.empty
+                elif col == 1:
+                    board += self.p1piece
+                elif col == 2:
+                    board += self.p2piece
+            # Newline for next row in the board
+            board += "\n"
+
+        if result == C4GameResults.WIN:
+            embed.description = f"""🔴 ― {self.players[0].mention}
+🟡 ― {self.players[1].mention}
+{self.players[self.turn].mention} has won!
+Game:
+{board}"""
+        elif result == C4GameResults.DRAW:
+            embed.description = f"""🔴 ― {self.players[0].mention}
+🟡 ― {self.players[1].mention}
+The game has ended in a draw.
+Game:
+{board}"""
+        elif result == C4GameResults.FORFEIT:
+            # 1 - self.turn gives the opposite of the turn
+            embed.description = f"""🔴 ― {self.players[0].mention}
+🟡 ― {self.players[1].mention}
+{self.players[1 - self.turn].mention} has won because of {self.players[self.turn].mention}'s forfeit.
+Game:
+{board}"""
+
+        await ctx.send(self.players[self.turn].mention, embed=embed)
 
 
 class ConnectFour(commands.Cog):
@@ -78,16 +144,40 @@ class ConnectFour(commands.Cog):
         game = C4Game(ctx.author, member)
 
         while True:
+            player = game.players[game.turn]
+
             # Send the board and then ask for player input
             await game.ctx_send_board(ctx)
 
-            # TODO: player input ill do ce first
+            def check(m):
+                # Message author is the player with the turn, and the channel is right
+                return m.author == player and m.channel == ctx.channel
+
+            player_input = await self.bot.wait_for('message', check=check)
+            player_input = player_input.content
+            if player_input.isnumeric():
+                # Input is a number, proceed if number is between 1 and 7
+                if 1 <= int(player_input) <= 7:
+                    await game.place(int(player_input))
+            elif player_input.lower() in ("forfeit", "ff", "resign", "you win", "i quit"):
+                await game.game_over(ctx, C4GameResults.FORFEIT)
+            else:
+                continue
+
+            result = await game.check_result()
+            if result in (C4GameResults.WIN, C4GameResults.DRAW):
+                await game.game_over(ctx, result)
+                return
+
+            await game.swap_players()
 
     @connect_four.error
     async def c4_error(self, ctx, error):
         # Bad Argument: the {member} parameter could not be converted
         if isinstance(error, commands.BadArgument):
             await ctx.send("Please send j.c4 \"@Member\", where @Member is the member you want to play against.")
+        else:
+            print(error)
 
 
 async def setup(bot):

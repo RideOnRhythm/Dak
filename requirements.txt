@@ -1,2 +1,4 @@
 jishaku
 discord
+numpy
+scipy

@@ -9,5 +9,10 @@ class Channels(Enum):
 
 
 class C4PlaceResults(Enum):
-    SUCCESSFUL = auto()
     NO_SPACE = auto()
+
+
+class C4GameResults(Enum):
+    WIN = auto()
+    DRAW = auto()
+    FORFEIT = auto()
