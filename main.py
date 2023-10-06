@@ -23,7 +23,7 @@ async def main():
 
     # Start bot
     print("Starting bot...")
-    await bot.start(os.getenv("token"))
+    await bot.start(os.getenv("TOKEN"))
 
 
 asyncio.run(main())
