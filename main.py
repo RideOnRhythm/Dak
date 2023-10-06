@@ -13,7 +13,6 @@ bot = commands.Bot(
 )
 discord.utils.setup_logging()
 bot.database = Database()
-# TODO: Periodic saving in tasks.py
 
 
 async def main():
