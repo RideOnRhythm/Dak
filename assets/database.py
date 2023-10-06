@@ -1,7 +1,7 @@
 import pickle
 
 # File where the database is saved
-DATABASE_FILE = "database"
+DATABASE_FILE = "../database"
 
 
 class Database:
