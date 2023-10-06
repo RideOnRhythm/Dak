@@ -1,3 +1,5 @@
+# Currency v0.1
+
 import discord
 from discord.ext import commands
 

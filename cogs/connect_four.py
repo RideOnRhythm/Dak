@@ -1,3 +1,5 @@
+# Connect Four v1.0
+
 import discord
 from discord.ext import commands
 import numpy as np
