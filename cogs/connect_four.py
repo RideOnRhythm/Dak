@@ -51,11 +51,13 @@ class C4Game:
         detection_kernels = [horizontal_kernel, vertical_kernel, diag1_kernel, diag2_kernel]
 
         for kernel in detection_kernels:
-            if (convolve2d(self.game_board == self.turn + 1, kernel, mode="valid") == 4).any():
+            if (convolve2d(np.array(self.game_board) == self.turn + 1, kernel, mode="valid") == 4).any():
                 return C4GameResults.WIN
 
-        # TODO: check for draw
-        return C4GameResults.DRAW
+        # all(top_row) can be done here as the game is a draw when
+        # all pieces in the top row are full
+        if all(self.game_board[-1]):
+            return C4GameResults.DRAW
 
     async def swap_players(self):
         # Next player's turn
