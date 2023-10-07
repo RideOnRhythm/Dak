@@ -1,5 +1,11 @@
 from enum import Enum
 from enum import auto
+import platform
+
+# Used for distinguishing between the beta testing device which is on Windows
+# and the actual server which is on Linux.
+# the beta testing device should use the channels and roles from the beta server
+os = platform.system()
 
 
 # Enum that lists channels for readability and beta testing.
