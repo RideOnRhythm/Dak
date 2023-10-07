@@ -204,7 +204,7 @@ class C4GameAI(C4Game):
         if self.last_played_col is None:
             embed.description += f"{self.players[self.turn].mention}'s turn"
         else:
-             embed.description += f"The AI placed its piece on column **{self.last_played_col}**."
+            embed.description += f"The AI placed its piece on column **{self.last_played_col}**."
         embed.add_field(name="Game", value=board)
 
         await ctx.send(self.players[self.turn].mention, embed=embed)
