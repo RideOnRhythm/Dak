@@ -380,6 +380,7 @@ class C4GameAI(C4Game):
 
         coin_amount = random.randint(100, 300)
         coin_amount *= self.level / 5
+        coin_amount = int(coin_amount)
         if result == C4GameResults.WIN:
             # Only add coins if the player won
             if self.turn == 0:
