@@ -16,6 +16,7 @@ class Database:
         with open(DATABASE_FILE, "rb") as f:
             self.database = pickle.load(f)
 
+    # Used for adding a new member in the database
     async def check_init_member(self, member):
         if "members" not in self.database:
             self.database["members"] = {}
@@ -24,6 +25,7 @@ class Database:
         if member.id not in self.database["members"]:
             self.database["members"][member.id] = {}
 
+    # Used for adding a new field to an existing member in the database
     async def check_init_member_field(self, member, field, default_value):
         if field not in self.database["members"][member.id]:
             self.database["members"][member.id][field] = default_value
