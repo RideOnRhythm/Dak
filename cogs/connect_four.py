@@ -176,7 +176,7 @@ class C4GameAI(C4Game):
     def __init__(self, p1, p2, level):
         super().__init__(p1, p2)
         self.level = level
-        self.game_board = np.zeros((self.ROWS, self.COLUMNS)).tolist()
+        self.game_board = np.zeros((self.ROWS, self.COLUMNS))
 
     def is_valid_location(self, board, col):
         return board[self.ROWS - 1][col] == 0
@@ -292,8 +292,8 @@ class C4GameAI(C4Game):
                     return None, math.inf
                 elif await self.winning_move(board, 1):
                     return None, -math.inf
-                else:
-                    return None, await self.heuristic(board, 2)
+            else:
+                return None, await self.heuristic(board, 2)
         if max_player:
             value = -math.inf
             column = random.choice(valid_cols)
@@ -366,11 +366,11 @@ class C4GameAI(C4Game):
                                  f":coin: has been added to their balance.")
 
         embed.add_field(name="Game", value=board)
-        await ctx.send(self.players[self.turn].mention, embed=embed)
+        await ctx.send(self.players[0].mention, embed=embed)
 
     async def ai_place(self):
         b_copy = deepcopy(self.game_board)
-        col, _ = await self.minimax(b_copy, self.level, -math.inf, math.inf, True)
+        col, value = await self.minimax(b_copy, self.level, -math.inf, math.inf, True)
 
         await self.place(col + 1)
 
