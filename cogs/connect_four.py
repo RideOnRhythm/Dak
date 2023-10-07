@@ -379,13 +379,14 @@ class C4GameAI(C4Game):
             board += "\n"
 
         coin_amount = random.randint(100, 300)
+        coin_amount *= self.level / 5
         if result == C4GameResults.WIN:
             # Only add coins if the player won
             if self.turn == 0:
                 await bot.database.add_member_coins(self.players[self.turn], coin_amount)
 
                 embed.description = (f"**{self.players[self.turn].mention} has won! {coin_amount}** "
-                                     f":coin: has been added to their balance.")
+                                     f":coin: has been added to your balance.")
             else:
                 embed.description = f"**{self.players[self.turn].mention} has won!**"
         elif result == C4GameResults.DRAW:
@@ -393,8 +394,7 @@ class C4GameAI(C4Game):
         elif result == C4GameResults.FORFEIT:
             # 1 - self.turn gives the opposite of the turn
             embed.description = (f"**{self.players[1 - self.turn].mention} has won** because of "
-                                 f"{self.players[self.turn].mention}'s forfeit. **{coin_amount}** "
-                                 f":coin: has been added to their balance.")
+                                 f"{self.players[self.turn].mention}'s forfeit.")
 
         embed.add_field(name="Game", value=board)
         await ctx.send(self.players[0].mention, embed=embed)
