@@ -177,6 +177,37 @@ class C4GameAI(C4Game):
         super().__init__(p1, p2)
         self.level = level
         self.game_board = np.zeros((self.ROWS, self.COLUMNS))
+        self.last_played_col = None
+
+    async def ctx_send_board(self, ctx, color_guide=False):
+        embed = discord.Embed(
+            title=f"{self.players[0].display_name} and {self.players[1].display_name}'s game:",
+            color=self.embed_color
+        )
+
+        board = ""
+        for row in reversed(self.game_board):
+            for col in row:
+                if col == 0:
+                    board += self.empty
+                elif col == 1:
+                    board += self.p1piece
+                elif col == 2:
+                    board += self.p2piece
+            board += "\n"
+
+        embed.description = ""
+        if color_guide:
+            embed.description = f"""🔴 ― {self.players[0].mention}
+🟡 ― {self.players[1].mention}
+"""
+        if self.last_played_col is None:
+            embed.description += f"{self.players[self.turn].mention}'s turn"
+        else:
+             embed.description += f"The AI placed its piece on column **{self.last_played_col}**."
+        embed.add_field(name="Game", value=board)
+
+        await ctx.send(self.players[self.turn].mention, embed=embed)
 
     def is_valid_location(self, board, col):
         return board[self.ROWS - 1][col] == 0
@@ -195,7 +226,7 @@ class C4GameAI(C4Game):
 
     async def in_place(self, board, input_col, piece):
         for i in range(self.ROWS):
-           if board[i][input_col] == 0:
+            if board[i][input_col] == 0:
                 board[i][input_col] = piece
                 return
 
@@ -370,7 +401,8 @@ class C4GameAI(C4Game):
 
     async def ai_place(self):
         b_copy = deepcopy(self.game_board)
-        col, value = await self.minimax(b_copy, self.level, -math.inf, math.inf, True)
+        col, _ = await self.minimax(b_copy, self.level, -math.inf, math.inf, True)
+        self.last_played_col = col
 
         await self.place(col + 1)
 
