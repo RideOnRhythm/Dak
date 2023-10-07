@@ -1,5 +1,6 @@
 # Connect Four v1.0
 
+import random
 import discord
 from discord.ext import commands
 import numpy as np
@@ -98,7 +99,7 @@ class C4Game:
 
         await ctx.send(self.players[self.turn].mention, embed=embed)
 
-    async def game_over(self, ctx, result):
+    async def game_over(self, bot, ctx, result):
         embed = discord.Embed(
             title=f"{self.players[0].display_name} and {self.players[1].display_name}'s game:",
             color=self.embed_color
@@ -118,17 +119,23 @@ class C4Game:
             # Newline for next row in the board
             board += "\n"
 
+        coin_amount = random.randint(100, 300)
         if result == C4GameResults.WIN:
-            embed.description = f"{self.players[self.turn].mention} has won!"
-            embed.add_field(name="Game", value=board)
+            await bot.database.add_member_coins(self.players[self.turn], coin_amount)
+
+            embed.description = (f"**{self.players[self.turn].mention} has won! {coin_amount}** "
+                                 f":coin: has been added to their balance.")
         elif result == C4GameResults.DRAW:
             embed.description = f"The game has ended in a draw."
-            embed.add_field(name="Game", value=board)
         elif result == C4GameResults.FORFEIT:
+            await bot.database.add_member_coins(self.players[self.turn], coin_amount)
+
             # 1 - self.turn gives the opposite of the turn
-            embed.description = (f"{self.players[1 - self.turn].mention} has won because of "
-                                 f"{self.players[self.turn].mention}'s forfeit.")
-            embed.add_field(name="Game", value=board)
+            embed.description = (f"**{self.players[1 - self.turn].mention} has won** because of "
+                                 f"{self.players[self.turn].mention}'s forfeit. **{coin_amount}** "
+                                 f":coin: has been added to their balance.")
+
+        embed.add_field(name="Game", value=board)
         await ctx.send(self.players[self.turn].mention, embed=embed)
 
 
@@ -161,15 +168,15 @@ class ConnectFour(commands.Cog):
                     if 1 <= int(player_input) <= 7:
                         await game.place(int(player_input))
                         break
-                elif player_input.lower() in ("forfeit", "ff", "resign", "you win", "i quit"):
-                    await game.game_over(ctx, C4GameResults.FORFEIT)
+                elif player_input.lower() in ("forfeit", "ff", "resign", ":handshake:", "�"):
+                    await game.game_over(self.bot, ctx, C4GameResults.FORFEIT)
                     return
                 else:
                     continue
 
             result = await game.check_result()
             if result in (C4GameResults.WIN, C4GameResults.DRAW):
-                await game.game_over(ctx, result)
+                await game.game_over(self.bot, ctx, result)
                 return
 
             await game.swap_players()
