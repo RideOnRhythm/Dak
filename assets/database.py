@@ -33,3 +33,15 @@ class Database:
         await self.check_init_member_field(member, "coin_balance", 0)
 
         return self.database["members"][member.id]["coin_balance"]
+
+    async def add_member_coins(self, member, coin_amount):
+        await self.check_init_member(member)
+        await self.check_init_member_field(member, "coin_balance", 0)
+
+        self.database["members"][member.id]["coin_balance"] += coin_amount
+
+    async def set_member_coins(self, member, coin_amount):
+        await self.check_init_member(member)
+        await self.check_init_member_field(member, "coin_balance", 0)
+
+        self.database["members"][member.id]["coin_balance"] = coin_amount

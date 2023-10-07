@@ -16,12 +16,14 @@ bot.database = Database()
 
 
 async def main():
-    # Load cogs
+    print("Loading database...")
+    await bot.database.load()
+
+    # Load cogs from cog_list.py
     for cog in cog_list:
         print(f"Loading cog {cog}")
         await bot.load_extension(cog)
 
-    # Start bot
     print("Starting bot...")
     await bot.start(os.getenv("TOKEN"))
 
