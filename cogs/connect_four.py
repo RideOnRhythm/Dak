@@ -402,7 +402,7 @@ class C4GameAI(C4Game):
     async def ai_place(self):
         b_copy = deepcopy(self.game_board)
         col, _ = await self.minimax(b_copy, self.level, -math.inf, math.inf, True)
-        self.last_played_col = col
+        self.last_played_col = col + 1
 
         await self.place(col + 1)
 
