@@ -1,5 +1,7 @@
 import io
 import re
+import sys
+
 import aiohttp
 from PIL import Image
 import discord
@@ -43,7 +45,7 @@ class DevUtil(commands.Cog):
         url = url.strip("<>")
 
         if re.match("https://www.reddit.com/r/.*/comments/.*/.*/", url):
-            result = subprocess.check_output(["gallery-dl", url, "-g"], shell=True).decode()
+            result = subprocess.check_output(["gallery-dl", url, "-g"], shell=True, stderr=sys.stdout).decode()
             url = result.strip().split("\n")[-1]
 
         async with aiohttp.ClientSession() as session:
