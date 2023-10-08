@@ -45,8 +45,7 @@ class DevUtil(commands.Cog):
         url = url.strip("<>")
 
         if re.match("https://www.reddit.com/r/.*/comments/.*/.*/", url):
-            result = subprocess.check_output(["gallery-dl", url, "-g"], shell=True, stderr=sys.stdout).decode()
-            print(result)
+            result = subprocess.check_output(f"gallery-dl {url} -g", shell=True, stderr=sys.stdout).decode()
             url = result.strip().split("\n")[-1]
 
         async with aiohttp.ClientSession() as session:
