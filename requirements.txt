@@ -1,4 +1,9 @@
 jishaku
-discord
-numpy
-scipy
+discord~=2.3.2
+numpy~=1.26.0
+scipy~=1.11.3
+pillow~=10.0.1
+aiohttp~=3.8.5
+tensorflow
+tensorflow_hub
+gallery-dl

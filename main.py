@@ -28,4 +28,5 @@ async def main():
     await bot.start(os.getenv("TOKEN"))
 
 
+# TODO: connect 4 no space fix
 asyncio.run(main())
