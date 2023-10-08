@@ -10,7 +10,8 @@ from discord.ext import commands
 from assets.cog_list import cog_list
 import subprocess
 
-model = tf.keras.models.load_model("assets/299x299.h5", custom_objects={"KerasLayer": hub.KerasLayer}, compile=False)
+model = tf.keras.models.load_model("./assets/299x299.h5", custom_objects={"KerasLayer": hub.KerasLayer},
+                                   compile=False)
 
 
 # Command check so only devs are allowed to use these commands
